@@ -3,30 +3,42 @@ import pandas as pd
 import random
 from datetime import datetime
 
-# Set page config
+# Page setup
 st.set_page_config(page_title="📬 Serverless Feedback App", layout="wide")
+st.title("📬 Serverless Feedback Collector")
+st.caption("Simulating a serverless app with Lambda-style feedback processing and metrics")
 
-# Initialize session state
+# Session initialization
 if "feedback_data" not in st.session_state:
     st.session_state.feedback_data = []
 if "lambda_logs" not in st.session_state:
     st.session_state.lambda_logs = []
 
-# Title and subtitle
-st.title("📬 Serverless Feedback Collector")
-st.caption("Simulating a serverless web app with Lambda logs, IAM roles, and feedback storage")
-
-# -------------------------------
-# IAM Roles (simulated)
-# -------------------------------
+# Sidebar – IAM roles
 st.sidebar.header("🔐 IAM Role Configuration")
 iam_roles = ["lambda-basic-execution", "cloudwatch-logs", "dynamodb-access", "s3-readonly"]
 selected_roles = st.sidebar.multiselect("Attach IAM Roles", iam_roles, default=iam_roles[:2])
 
 # -------------------------------
+# Metrics Section
+# -------------------------------
+st.markdown("### 📊 Serverless Function Metrics")
+col1, col2, col3 = st.columns(3)
+
+total_requests = len(st.session_state.lambda_logs)
+avg_memory = int(
+    sum(log["Memory Used (MB)"] for log in st.session_state.lambda_logs) / total_requests
+) if total_requests else 0
+feedback_count = len(st.session_state.feedback_data)
+
+col1.metric("📥 Total Requests", total_requests)
+col2.metric("🧠 Avg Memory Used", f"{avg_memory} MB")
+col3.metric("💬 Feedback Entries", feedback_count)
+
+# -------------------------------
 # Feedback Form
 # -------------------------------
-st.markdown("### 📝 Submit Feedback")
+st.markdown("### 📝 Submit Your Feedback")
 with st.form("feedback_form"):
     name = st.text_input("Your Name")
     feedback = st.text_area("Your Feedback", height=150)
@@ -42,7 +54,7 @@ with st.form("feedback_form"):
                 "Timestamp": timestamp
             })
 
-            # Simulated Lambda log
+            # Simulated log
             log_levels = ["INFO", "INFO", "INFO", "WARN", "ERROR"]
             st.session_state.lambda_logs.insert(0, {
                 "Time": timestamp,
@@ -60,29 +72,36 @@ with st.form("feedback_form"):
 # -------------------------------
 if st.session_state.feedback_data:
     st.markdown("### 💬 Submitted Feedback")
-    df = pd.DataFrame(st.session_state.feedback_data)
-    st.dataframe(df, use_container_width=True)
+    feedback_df = pd.DataFrame(st.session_state.feedback_data)
+    st.dataframe(feedback_df, use_container_width=True)
 else:
     st.info("No feedback submitted yet.")
 
 # -------------------------------
-# Display Simulated Lambda Logs
+# Simulated Logs Table
 # -------------------------------
 if st.session_state.lambda_logs:
-    st.markdown("### 🪵 Lambda Invocation Logs")
+    st.markdown("### 🪵 Lambda Function Logs")
     logs_df = pd.DataFrame(st.session_state.lambda_logs)
     st.dataframe(logs_df, use_container_width=True)
 else:
     st.info("No invocation logs yet.")
 
 # -------------------------------
-# Explanation
+# Architecture Summary
 # -------------------------------
-st.markdown("### 🧠 Serverless Architecture Explanation")
-st.info("""
-- 🧾 Form acts as **API Gateway**
-- ⚙️ Button press simulates **Lambda execution**
-- 🗃️ Feedback is stored like a **DynamoDB table**
-- 🔐 IAM roles simulate secure access
-- 🪵 Logs mimic **CloudWatch logs**
+st.markdown("### 🧠 Architecture Overview")
+st.markdown("""
+This demo simulates a basic **Serverless Web App Architecture**:
+
+🔁 **Frontend**: A simple form where users submit feedback  
+🚪 **API Gateway (Simulated)**: Form submission acts as API entry  
+⚙️ **AWS Lambda (Simulated)**: Serverless function handles logic  
+🧠 **IAM Roles**: Control access to resources like logs or storage  
+📦 **DynamoDB (Simulated)**: Session stores feedback entries  
+📜 **CloudWatch Logs**: Simulated request logs per invocation
+
+---
+
+This is a minimal, scalable setup to mimic how serverless feedback apps work in production.
 """)
